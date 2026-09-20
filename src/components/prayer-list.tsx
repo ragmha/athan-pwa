@@ -144,8 +144,6 @@ function basisMarker(entry: PrayerEntry): string | null {
       return "No true twilight — estimated"
     case "ruleAdjusted":
       return "Adjusted for high latitude"
-    case "derived":
-      return "Calculated from night length"
     default:
       return null
   }
