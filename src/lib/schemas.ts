@@ -53,6 +53,25 @@ export type HighLatitudeRuleKey = z.infer<typeof highLatitudeRuleSchema>
 export const clockFormatSchema = z.enum(["12h", "24h"])
 export type ClockFormat = z.infer<typeof clockFormatSchema>
 
+export const PRAYER_IDS = [
+  "fajr",
+  "sunrise",
+  "dhuhr",
+  "asr",
+  "maghrib",
+  "isha",
+] as const
+
+export const prayerIdSchema = z.enum(PRAYER_IDS)
+export type PrayerId = z.infer<typeof prayerIdSchema>
+
+export const prayerProgressSchema = z.object({
+  version: z.literal(STORAGE_VERSION),
+  completed: z.array(prayerIdSchema),
+})
+
+export type PrayerProgress = z.infer<typeof prayerProgressSchema>
+
 // ---------------------------------------------------------------------------
 // Location
 // ---------------------------------------------------------------------------
@@ -176,4 +195,5 @@ export function writePersisted(key: string, value: unknown): void {
 export const STORAGE_KEYS = {
   settings: "athan.settings",
   location: "athan.location",
+  prayerProgress: "athan.prayer-progress",
 } as const

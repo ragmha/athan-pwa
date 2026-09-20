@@ -14,25 +14,19 @@ import { twilightOccurs } from "@/lib/solar"
 import type {
   AppLocation,
   HighLatitudeRuleKey,
+  PrayerId,
   Settings,
 } from "@/lib/schemas"
+import { PRAYER_IDS } from "@/lib/schemas"
+
+export type { PrayerId } from "@/lib/schemas"
+export { PRAYER_IDS } from "@/lib/schemas"
 
 /**
  * Pure prayer-time layer. Everything here is a function of
  * (coordinates, date, settings) — no I/O, no `Date.now()` — so it is fully
  * unit-testable. See AGENTS.md §5.
  */
-
-export const PRAYER_IDS = [
-  "fajr",
-  "sunrise",
-  "dhuhr",
-  "asr",
-  "maghrib",
-  "isha",
-] as const
-
-export type PrayerId = (typeof PRAYER_IDS)[number]
 
 /** Prayers that are actually prayed; Shuruq is displayed but never "next". */
 export const OBLIGATORY_PRAYERS: readonly PrayerId[] = [

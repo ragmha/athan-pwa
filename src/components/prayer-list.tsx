@@ -1,6 +1,7 @@
 import { Sunrise, TriangleAlert } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatTime } from "@/lib/format"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   isValidDate,
   PRAYER_LABELS,
@@ -15,11 +16,15 @@ export function PrayerList({
   currentPrayer,
   nextPrayer,
   clockFormat,
+  completed,
+  onToggle,
 }: {
   day: DayTimes
   currentPrayer: PrayerId | null
   nextPrayer: PrayerId | null
   clockFormat: ClockFormat
+  completed: ReadonlySet<PrayerId>
+  onToggle: (prayer: PrayerId) => void
 }) {
   return (
     <ul aria-label="Prayer times" className="flex flex-col">
@@ -30,6 +35,8 @@ export function PrayerList({
           isCurrent={entry.id === currentPrayer}
           isNext={entry.id === nextPrayer}
           clockFormat={clockFormat}
+          completed={completed.has(entry.id)}
+          onToggle={onToggle}
         />
       ))}
     </ul>
@@ -41,11 +48,15 @@ function PrayerRow({
   isCurrent,
   isNext,
   clockFormat,
+  completed,
+  onToggle,
 }: {
   entry: PrayerEntry
   isCurrent: boolean
   isNext: boolean
   clockFormat: ClockFormat
+  completed: boolean
+  onToggle: (prayer: PrayerId) => void
 }) {
   const label = PRAYER_LABELS[entry.id]
   const isShuruq = entry.id === "sunrise"
@@ -59,7 +70,8 @@ function PrayerRow({
       className={cn(
         "flex items-center gap-3 rounded-lg px-3 py-3 transition-colors",
         isCurrent && "bg-accent",
-        isNext && !isCurrent && "bg-accent/40"
+        isNext && !isCurrent && "bg-accent/40",
+        completed && "opacity-70"
       )}
     >
       {isShuruq ? (
@@ -104,6 +116,20 @@ function PrayerRow({
       >
         {formatTime(entry.time, clockFormat)}
       </span>
+
+      {entry.id === "sunrise" ? (
+        <span className="size-4 shrink-0" aria-hidden />
+      ) : (
+        <Checkbox
+          checked={completed}
+          onCheckedChange={() => {
+            onToggle(entry.id)
+          }}
+          aria-label={`Mark ${label.en} as ${
+            completed ? "not completed" : "completed"
+          }`}
+        />
+      )}
     </li>
   )
 }

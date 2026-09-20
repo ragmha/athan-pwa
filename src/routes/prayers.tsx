@@ -14,6 +14,7 @@ import {
 } from "@/lib/prayer-times"
 import { useNow } from "@/hooks/use-now"
 import { useAppState } from "@/hooks/use-app-state"
+import { usePrayerProgress } from "@/hooks/use-prayer-progress"
 
 // The command palette pulls in a sizeable dependency for a dialog most sessions
 // never open, so it is only fetched once the user asks to change location.
@@ -34,6 +35,7 @@ export function PrayersRoute() {
     () => getDayTimes(location, settings, new Date(dayKey)),
     [location, settings, dayKey]
   )
+  const progress = usePrayerProgress(day.date)
 
   const next = getNextPrayer(location, settings, now)
   const current = getCurrentPrayer(location, settings, now)
@@ -79,7 +81,13 @@ export function PrayersRoute() {
         currentPrayer={current}
         nextPrayer={next.isTomorrow ? null : next.id}
         clockFormat={settings.clockFormat}
+        completed={progress.completed}
+        onToggle={progress.toggle}
       />
+
+      <p className="text-center text-xs text-muted-foreground" aria-live="polite">
+        {progress.completedCount} of 5 prayers completed
+      </p>
 
       <HighLatitudeNote day={day} rule={settings.highLatitudeRule} />
 

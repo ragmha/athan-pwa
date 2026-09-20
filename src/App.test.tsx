@@ -1,10 +1,11 @@
-import { render, screen, within } from "@testing-library/react"
+import { fireEvent, render, screen, within } from "@testing-library/react"
 import { MemoryRouter } from "react-router"
 import { beforeEach, describe, expect, it } from "vitest"
 import App from "@/App"
 import { AppStateProvider } from "@/components/app-state-provider"
 import { ThemeProvider } from "@/components/theme-provider"
 import { DEFAULT_LOCATION, STORAGE_KEYS } from "@/lib/schemas"
+import { prayerDateKey } from "@/lib/prayer-progress"
 
 /**
  * A mounting smoke test. It is deliberately shallow on assertions and broad on
@@ -50,6 +51,24 @@ describe("App", () => {
     // placeholder here means the calculation never ran.
     const times = screen.getAllByText(/^\d{2}:\d{2}$/)
     expect(times.length).toBeGreaterThanOrEqual(5)
+  })
+
+  it("tracks completed prayers for the current day", async () => {
+    renderApp()
+    await screen.findByRole("button", { name: /Helsinki/ })
+
+    const fajr = screen.getByRole("checkbox", { name: "Mark Fajr as completed" })
+    expect(fajr).not.toBeChecked()
+
+    fireEvent.click(fajr)
+
+    expect(fajr).toBeChecked()
+    expect(screen.getByText("1 of 5 prayers completed")).toBeInTheDocument()
+    expect(
+      localStorage.getItem(
+        `${STORAGE_KEYS.prayerProgress}.${prayerDateKey(new Date())}`
+      )
+    ).toContain('"fajr"')
   })
 
   it("exposes the three main tabs", async () => {
