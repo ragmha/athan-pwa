@@ -33,8 +33,11 @@ export default defineConfig({
         scope: BASE,
         display: "standalone",
         orientation: "portrait",
-        background_color: "#0f172a",
-        theme_color: "#0f172a",
+        // Must match the dark `--background` in index.css, and the dark
+        // `theme-color` meta in index.html, or the splash screen flashes a
+        // different navy than the app itself.
+        background_color: "#151d31",
+        theme_color: "#151d31",
         categories: ["lifestyle", "utilities"],
         icons: [
           { src: "icons/icon-192.png", sizes: "192x192", type: "image/png" },
