@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "react", "react-perf", "unicorn", "oxc", "promise", "jsx-a11y"],
+  "env": { "browser": true, "es2024": true },
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "warn",
+    "pedantic": "off",
+    "style": "off"
+  },
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error",
+    "typescript/await-thenable": "error",
+    "typescript/no-unnecessary-condition": "error",
+    "typescript/no-explicit-any": "error",
+    "typescript/consistent-type-imports": "error",
+    "eqeqeq": "error",
+    "no-console": ["warn", { "allow": ["warn", "error"] }]
+  },
+  "ignorePatterns": ["dist", "dev-dist", "node_modules", "src/components/ui"]
+}
