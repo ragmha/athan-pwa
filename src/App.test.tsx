@@ -38,7 +38,15 @@ describe("App", () => {
     ).toBeInTheDocument()
 
     const list = screen.getByRole("list", { name: "Prayer times" })
-    for (const name of ["Fajr", "Shuruq", "Dhuhr", "Asr", "Maghrib", "Isha"]) {
+    for (const name of [
+      "Qiyam",
+      "Fajr",
+      "Sunrise",
+      "Dhuhr",
+      "Asr",
+      "Maghrib",
+      "Isha",
+    ]) {
       expect(within(list).getByText(name)).toBeInTheDocument()
     }
   })
@@ -63,7 +71,9 @@ describe("App", () => {
     fireEvent.click(fajr)
 
     expect(fajr).toBeChecked()
-    expect(screen.getByText("1 of 5 prayers completed")).toBeInTheDocument()
+    expect(
+      screen.getByText("1 of 6 tracked prayers completed")
+    ).toBeInTheDocument()
     expect(
       localStorage.getItem(
         `${STORAGE_KEYS.prayerProgress}.${prayerDateKey(new Date())}`

@@ -8,7 +8,7 @@ import { isValidDate, type DayTimes } from "@/lib/prayer-times"
  * Midnight sits at the bottom and noon at the top, so the sun's position on the
  * ring matches where it actually is in the sky — it climbs the right-hand side
  * through the morning and descends the left through the afternoon. The lit arc
- * spans Shuruq to Maghrib.
+ * spans Sunrise to Maghrib.
  *
  * The whole thing is decorative: it carries `aria-hidden`, and the surrounding
  * card states the same information as text (AGENTS.md §6).

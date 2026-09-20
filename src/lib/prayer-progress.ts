@@ -25,7 +25,7 @@ export function readCompletedPrayers(date: Date): Set<PrayerId> {
     prayerProgressSchema,
     { version: STORAGE_VERSION, completed: [] }
   )
-  return new Set(progress.completed)
+  return new Set(progress.completed.filter((id) => id !== "sunrise"))
 }
 
 export function writeCompletedPrayers(

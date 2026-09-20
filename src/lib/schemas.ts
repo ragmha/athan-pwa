@@ -54,6 +54,7 @@ export const clockFormatSchema = z.enum(["12h", "24h"])
 export type ClockFormat = z.infer<typeof clockFormatSchema>
 
 export const PRAYER_IDS = [
+  "qiyam",
   "fajr",
   "sunrise",
   "dhuhr",
@@ -116,8 +117,8 @@ export type Settings = z.infer<typeof settingsSchema>
 export const DEFAULT_SETTINGS: Settings = {
   version: STORAGE_VERSION,
   calculationMethod: null,
-  madhab: "hanafi",
-  highLatitudeRule: "auto",
+  madhab: "shafi",
+  highLatitudeRule: "middleofthenight",
   clockFormat: "24h",
 }
 

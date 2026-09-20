@@ -8,9 +8,9 @@ them produces incorrect prayer times, a broken install, or a failing build.
 
 ## 1. What this is
 
-**Athan** is an offline-first, installable PWA that shows the five daily prayer
-times plus Shuruq for the user's location, a live countdown to the next prayer,
-the Gregorian and Hijri date, and the Qibla direction.
+**Athan** is an offline-first, installable PWA that shows Qiyam, the five daily
+prayers, and Sunrise for the user's location, a live countdown to the next
+prayer, the Gregorian and Hijri date, and the Qibla direction.
 
 It is a **single-page, client-only app**. There is no backend, no database and no
 user account. All state lives in `localStorage`.

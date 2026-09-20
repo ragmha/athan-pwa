@@ -86,7 +86,7 @@ export function PrayersRoute() {
       />
 
       <p className="text-center text-xs text-muted-foreground" aria-live="polite">
-        {progress.completedCount} of 5 prayers completed
+        {progress.completedCount} of 6 tracked prayers completed
       </p>
 
       <HighLatitudeNote day={day} rule={settings.highLatitudeRule} />

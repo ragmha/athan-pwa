@@ -28,7 +28,7 @@ export { PRAYER_IDS } from "@/lib/schemas"
  * unit-testable. See AGENTS.md §5.
  */
 
-/** Prayers that are actually prayed; Shuruq is displayed but never "next". */
+/** Tracked prayers; Sunrise is displayed but never "next". */
 export const OBLIGATORY_PRAYERS: readonly PrayerId[] = [
   "fajr",
   "dhuhr",
@@ -38,8 +38,9 @@ export const OBLIGATORY_PRAYERS: readonly PrayerId[] = [
 ]
 
 export const PRAYER_LABELS: Record<PrayerId, { en: string; ar: string }> = {
+  qiyam: { en: "Qiyam", ar: "قيام الليل" },
   fajr: { en: "Fajr", ar: "الفجر" },
-  sunrise: { en: "Shuruq", ar: "الشروق" },
+  sunrise: { en: "Sunrise", ar: "الشروق" },
   dhuhr: { en: "Dhuhr", ar: "الظهر" },
   asr: { en: "Asr", ar: "العصر" },
   maghrib: { en: "Maghrib", ar: "المغرب" },
@@ -62,7 +63,11 @@ export interface PrayerEntry {
   basis: PrayerBasis
 }
 
-export type PrayerBasis = "observed" | "ruleAdjusted" | "undefined"
+export type PrayerBasis =
+  | "observed"
+  | "ruleAdjusted"
+  | "undefined"
+  | "derived"
 
 export interface DayTimes {
   date: Date
@@ -121,6 +126,26 @@ function buildParameters(location: AppLocation, settings: Settings) {
  */
 function isValidDate(time: Date): boolean {
   return !Number.isNaN(time.getTime())
+}
+
+function getQiyamTime(
+  coordinates: Coordinates,
+  date: Date,
+  parameters: CalculationParameters
+): Date {
+  const today = new PrayerTimes(coordinates, date, parameters)
+  const previous = new PrayerTimes(coordinates, addDays(date, -1), parameters)
+
+  if (!isValidDate(today.fajr) || !isValidDate(previous.maghrib)) {
+    return new Date(Number.NaN)
+  }
+
+  // Qiyam begins at the final third of the night: two thirds of the interval
+  // from the previous sunset to today's Fajr. This is the 01:30-style value
+  // used by the reference schedule for Helsinki on 20 September 2026.
+  const nightStart = previous.maghrib.getTime()
+  const dawn = today.fajr.getTime()
+  return new Date(nightStart + (dawn - nightStart) * (2 / 3))
 }
 
 /**
@@ -203,6 +228,7 @@ export function getDayTimes(
   const times = new PrayerTimes(coordinates, date, parameters)
 
   const actual: Record<PrayerId, Date> = {
+    qiyam: getQiyamTime(coordinates, date, parameters),
     fajr: times.fajr,
     sunrise: times.sunrise,
     dhuhr: times.dhuhr,
@@ -223,14 +249,18 @@ export function getDayTimes(
   const entries: PrayerEntry[] = PRAYER_IDS.map((id) => ({
     id,
     time: actual[id],
-    basis: bases.get(id) ?? "observed",
+    basis: id === "qiyam" ? "derived" : (bases.get(id) ?? "observed"),
   }))
 
   return {
     date,
     entries,
     highLatitudeRule: parameters.highLatitudeRule,
-    hasApproximation: entries.some((entry) => entry.basis !== "observed"),
+    hasApproximation: entries.some(
+      (entry) =>
+        (entry.id === "fajr" || entry.id === "isha") &&
+        entry.basis !== "observed"
+    ),
   }
 }
 
@@ -296,7 +326,7 @@ export function getNextPrayer(
 
 /**
  * The prayer whose window currently contains `now`, or `null` before Fajr.
- * Shuruq is a moment rather than a window, so a time between sunrise and Dhuhr
+ * Sunrise is a moment rather than a window, so a time between sunrise and Dhuhr
  * still counts as being in the Fajr window having ended — `adhan` models this
  * by reporting `sunrise` as the current prayer, which we surface as-is so the
  * UI can highlight the right row.

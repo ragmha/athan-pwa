@@ -59,7 +59,7 @@ function PrayerRow({
   onToggle: (prayer: PrayerId) => void
 }) {
   const label = PRAYER_LABELS[entry.id]
-  const isShuruq = entry.id === "sunrise"
+  const isSunrise = entry.id === "sunrise"
   const marker = basisMarker(entry)
 
   return (
@@ -74,7 +74,7 @@ function PrayerRow({
         completed && "opacity-70"
       )}
     >
-      {isShuruq ? (
+      {isSunrise ? (
         <Sunrise className="size-4 shrink-0 text-muted-foreground" aria-hidden />
       ) : (
         <span
@@ -90,7 +90,7 @@ function PrayerRow({
         <span
           className={cn(
             "truncate font-medium",
-            isShuruq && "text-muted-foreground"
+            isSunrise && "text-muted-foreground"
           )}
         >
           {label.en}
@@ -110,14 +110,14 @@ function PrayerRow({
       <span
         className={cn(
           "tabular w-16 text-end font-semibold",
-          isShuruq && "font-normal text-muted-foreground",
+          isSunrise && "font-normal text-muted-foreground",
           !isValidDate(entry.time) && "text-muted-foreground"
         )}
       >
         {formatTime(entry.time, clockFormat)}
       </span>
 
-      {entry.id === "sunrise" ? (
+      {isSunrise ? (
         <span className="size-4 shrink-0" aria-hidden />
       ) : (
         <Checkbox
@@ -144,6 +144,8 @@ function basisMarker(entry: PrayerEntry): string | null {
       return "No true twilight — estimated"
     case "ruleAdjusted":
       return "Adjusted for high latitude"
+    case "derived":
+      return "Calculated from night length"
     default:
       return null
   }

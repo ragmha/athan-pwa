@@ -63,7 +63,7 @@ describe("getDayTimes", () => {
   ] as const
 
   it.each(cases)(
-    "%s on %s produces six valid, ordered times",
+    "%s on %s produces seven valid, ordered times",
     (_city, location, date) => {
       const day = getDayTimes(location, settings, date)
 
@@ -76,7 +76,7 @@ describe("getDayTimes", () => {
         ).toBe(true)
       }
 
-      // Fajr < Shuruq < Dhuhr < Asr < Maghrib < Isha, always.
+      // Qiyam < Fajr < Sunrise < Dhuhr < Asr < Maghrib < Isha, always.
       const timestamps = day.entries.map((entry) => entry.time.getTime())
       const sorted = timestamps.toSorted((a, b) => a - b)
       expect(timestamps).toEqual(sorted)
@@ -95,13 +95,37 @@ describe("getDayTimes", () => {
     expect(basisOf(day, "isha")).toBe("undefined")
   })
 
-  it("reports Helsinki's winter Fajr as rule-adjusted, not undefined", () => {
-    // In December the sun drops over 50° below the horizon, so twilight is
-    // real. The recommended seventh-of-the-night rule still shifts the time,
-    // and the user deserves to know that — but it is a different claim from
-    // "this prayer does not occur".
+  it("reports Helsinki's winter Fajr as observed with the middle-night rule", () => {
+    // The API-compatible default uses the middle-of-the-night rule. In
+    // December true twilight exists and this rule does not move Fajr, so it is
+    // observed rather than marked as adjusted.
     const day = getDayTimes(HELSINKI, settings, WINTER_SOLSTICE)
-    expect(basisOf(day, "fajr")).toBe("ruleAdjusted")
+    expect(basisOf(day, "fajr")).toBe("observed")
+  })
+
+  it("adds Qiyam at the start of the final third of the night", () => {
+    const day = getDayTimes(
+      HELSINKI,
+      settings,
+      new Date("2026-09-20T12:00:00Z")
+    )
+    const qiyam = day.entries.find((entry) => entry.id === "qiyam")
+    const fajr = day.entries.find((entry) => entry.id === "fajr")
+    const previous = getDayTimes(
+      HELSINKI,
+      settings,
+      new Date("2026-09-19T12:00:00Z")
+    )
+    const maghrib = timeOf(previous, "maghrib")
+
+    expect(qiyam?.basis).toBe("derived")
+    expect(
+      Math.abs(
+        (qiyam?.time.getTime() ?? 0) -
+          (maghrib + ((fajr?.time.getTime() ?? 0) - maghrib) * (2 / 3))
+      )
+    ).toBeLessThan(1_000)
+    expect(qiyam?.time.getTime()).toBeLessThan(fajr?.time.getTime() ?? 0)
   })
 
   it("observes every prayer in Jeddah all year round", () => {
@@ -146,8 +170,8 @@ describe("getNextPrayer", () => {
     expect(OBLIGATORY_PRAYERS).toContain(next.id)
   })
 
-  it("never returns Shuruq, which is not prayed", () => {
-    // Walk the whole day in 15-minute steps; Shuruq must never be "next".
+  it("never returns Sunrise, which is not prayed", () => {
+    // Walk the whole day in 15-minute steps; Sunrise must never be "next".
     const start = new Date("2026-03-20T00:00:00Z")
     for (let minutes = 0; minutes < 24 * 60; minutes += 15) {
       const now = new Date(start.getTime() + minutes * 60_000)

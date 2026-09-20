@@ -1,15 +1,20 @@
 # Athan
 
-An offline-first, installable prayer-times app. It shows the five daily prayers
-plus Shuruq, a live countdown to the next one, the Gregorian and Hijri date, and
-the direction of the Qibla. You can also check off each completed prayer and
-track the day's progress.
+An offline-first, installable prayer-times app. It shows Qiyam, the five daily
+prayers, Sunrise, a live countdown to the next one, the Gregorian and Hijri
+date, and the direction of the Qibla. You can also check off each tracked
+prayer and follow the day's progress.
 
 Everything is computed **on the device**. There is no backend, no account and no
 analytics, and the app is fully usable in airplane mode.
 
 Prayer completion is stored locally per calendar day. It never leaves the device
 and automatically starts a fresh checklist on the next day.
+
+The default Helsinki preset uses Muslim World League angles, Shafi Asr, and the
+middle-of-the-night high-latitude rule. These match the reference schedule more
+closely than the previous Hanafi/recommended defaults; both madhab and
+high-latitude rule remain configurable in Settings.
 
 ## Why it is built this way
 
