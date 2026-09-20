@@ -1,6 +1,7 @@
 import type {
   AppLocation,
   CalculationMethodKey,
+  HighLatitudeRuleKey,
   Settings,
 } from "@/lib/schemas"
 
@@ -86,4 +87,11 @@ export const METHOD_LABELS: Record<CalculationMethodKey, string> = {
   Singapore: "Singapore",
   Tehran: "Institute of Geophysics, Tehran",
   Turkey: "Diyanet İşleri (Turkey)",
+}
+
+export const HIGH_LATITUDE_RULE_LABELS: Record<HighLatitudeRuleKey, string> = {
+  auto: "Recommended for your latitude",
+  middleofthenight: "Middle of the night",
+  seventhofthenight: "One seventh of the night",
+  twilightangle: "Twilight angle",
 }

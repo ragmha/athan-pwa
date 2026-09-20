@@ -14,7 +14,11 @@ const BASE = "/athan-pwa/"
 export default defineConfig({
   base: BASE,
   plugins: [
-    react(),
+    // The Prayers screen rerenders once a second for the countdown, so
+    // automatic memoisation is worth more here than in a typical app.
+    react({
+      babel: { plugins: ["babel-plugin-react-compiler"] },
+    }),
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",

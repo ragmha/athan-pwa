@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Athan">
+  <rect width="512" height="512" rx="112" fill="#1e2a4a"/>
+  <circle cx="256" cy="268" r="150" fill="none" stroke="#7aa2f7" stroke-width="18" opacity="0.35"/>
+  <path d="M256 118a150 150 0 0 1 106 256" fill="none" stroke="#7aa2f7" stroke-width="18" stroke-linecap="round"/>
+  <path d="M300 168a94 94 0 1 0 74 132 106 106 0 0 1-74-132Z" fill="#e8eefc"/>
+  <circle cx="330" cy="196" r="13" fill="#e8eefc"/>
+</svg>

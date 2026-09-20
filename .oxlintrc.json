@@ -1,7 +1,18 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["typescript", "react", "react-perf", "unicorn", "oxc", "promise", "jsx-a11y"],
-  "env": { "browser": true, "es2024": true },
+  "plugins": [
+    "typescript",
+    "react",
+    "react-perf",
+    "unicorn",
+    "oxc",
+    "promise",
+    "jsx-a11y"
+  ],
+  "env": {
+    "browser": true,
+    "es2024": true
+  },
   "categories": {
     "correctness": "error",
     "suspicious": "error",
@@ -18,7 +29,25 @@
     "typescript/no-explicit-any": "error",
     "typescript/consistent-type-imports": "error",
     "eqeqeq": "error",
-    "no-console": ["warn", { "allow": ["warn", "error"] }]
+    "no-console": [
+      "warn",
+      {
+        "allow": [
+          "warn",
+          "error"
+        ]
+      }
+    ],
+    "react-perf/jsx-no-new-function-as-prop": "off",
+    "react-perf/jsx-no-new-object-as-prop": "off",
+    "react-perf/jsx-no-new-array-as-prop": "off",
+    "react-perf/jsx-no-jsx-as-prop": "off",
+    "jsx-a11y/prefer-tag-over-role": "off"
   },
-  "ignorePatterns": ["dist", "dev-dist", "node_modules", "src/components/ui"]
+  "ignorePatterns": [
+    "dist",
+    "dev-dist",
+    "node_modules",
+    "src/components/ui"
+  ]
 }
