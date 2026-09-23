@@ -8,12 +8,18 @@ them produces incorrect prayer times, a broken install, or a failing build.
 
 ## 1. What this is
 
-**Athan** is an offline-first, installable PWA that shows Qiyam, the five daily
-prayers, and Sunrise for the user's location, a live countdown to the next
-prayer, the Gregorian and Hijri date, and the Qibla direction.
+**Athan** is an offline-first, installable PWA that shows the five daily prayers
+for the user's location, a live countdown to the next prayer, the Gregorian and
+Hijri date, and the Qibla direction. Qiyam and Sunrise are hidden by default and
+can be shown together with a checkbox in Settings.
 
-It is a **single-page, client-only app**. There is no backend, no database and no
-user account. All state lives in `localStorage`.
+It is a **single-page, client-only app**. There is no backend, remote database or
+user account. Settings and location live in `localStorage`; daily prayer history
+lives in IndexedDB.
+
+Only Fajr, Dhuhr, Asr, Maghrib and Isha are tracked. A streak counts consecutive
+local calendar days with all five checked off; an unfinished today does not break
+yesterday's streak. Qiyam and Sunrise never contribute, even when shown.
 
 ### Non-goals
 
@@ -62,6 +68,8 @@ reading the reasoning.
 | `zod` | 4.6 | Boundary validation — see §4.3 |
 | `vite-plugin-pwa` | 1.3 | Manifest + Workbox service worker |
 | `vitest` | 5.0 | Unit tests |
+| `idb` | 8.0 | Promise-based IndexedDB transactions for prayer history |
+| `fake-indexeddb` | 6.2 | IndexedDB implementation for unit tests only |
 
 Runtime: **bun 1.3+**. Use `bun` / `bunx`, never `npm` or `pnpm`, so the lockfile
 stays consistent.
@@ -108,15 +116,24 @@ This project uses **Base UI**, not Radix. Consequences:
 
 ### 4.3 ALL external data MUST be parsed with zod
 
-There are exactly three untrusted boundaries:
+There are four untrusted boundaries:
 
 1. `localStorage` — may hold stale, hand-edited or corrupt data from an older
    schema version.
-2. The Open-Meteo geocoding response.
-3. The BigDataCloud reverse-geocoding response.
+2. IndexedDB prayer-history records.
+3. The Open-Meteo geocoding response.
+4. The BigDataCloud reverse-geocoding response.
 
-Every one of them goes through `safeParse` in `src/lib/schemas.ts`, with a
-fallback to defaults on failure. Persisted schemas carry a **version** field.
+Every one of them is validated with schemas from `src/lib/schemas.ts` through
+`safeParse`. Settings and location fall back to defaults; corrupt history is
+reported and is never silently overwritten. Persisted schemas carry a
+**version** field.
+
+Prayer history migrates valid legacy `localStorage` entries into IndexedDB
+without overwriting existing days, including empty days. The legacy copy is kept
+as a backup. Writes merge a single prayer inside a read/write transaction and are
+only shown as saved after the transaction commits. Storage failures must be
+visible to the user, not treated as an empty successful history.
 
 - **NEVER** use `as` to assert the shape of external data.
 - Derive types with `z.infer` so the schema is the single source of truth; never
@@ -179,6 +196,9 @@ HTTPS tunnel.
 - Time-dependent code takes an injected `now: Date`. **NEVER** call `Date.now()`
   or `new Date()` directly inside logic you want to test.
 - Bug fixes start with a failing test.
+- History tests cover legacy migration, failed reads/writes, local-date and DST
+  boundaries, and in-flight saves at midnight. Optional-time settings must not
+  alter the underlying astronomical calculations or the five-prayer streak.
 
 ---
 
@@ -222,9 +242,11 @@ system. Do **not** add `next-themes`; it would duplicate this.
 - Prayer names are shown in Arabic alongside the transliteration, and the project
   is RTL-enabled (`components.json` → `"rtl": true`). Do not hard-code `left` /
   `right`; use logical properties (`ms-*`, `me-*`, `start` / `end`).
-- The Qibla compass and the day dial are graphical: both **MUST** expose an
+- The Qibla compass and the day timeline are graphical: both **MUST** expose an
   accessible text equivalent (the bearing in degrees, the times as text).
-- Honour `prefers-reduced-motion` for the dial and any animation.
+- The compact day strip represents elapsed local-day time, not completed prayers
+  or solar altitude. Its optional markers follow the Qiyam/Sunrise setting.
+- Honour `prefers-reduced-motion` for the timeline and any animation.
 - Respect safe-area insets so the installed app clears the notch and home bar.
 
 ### Comments

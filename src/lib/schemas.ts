@@ -3,8 +3,8 @@ import { z } from "zod"
 /**
  * Every value that enters the app from outside its own code is parsed here.
  *
- * There are exactly three such boundaries: `localStorage`, the Open-Meteo
- * geocoding API and the BigDataCloud reverse-geocoding API. None of them are
+ * The storage boundaries are `localStorage` and IndexedDB, alongside the
+ * Open-Meteo and BigDataCloud geocoding APIs. None of them are
  * trustworthy — stored data may come from an older schema version or have been
  * hand-edited, and third-party JSON can change shape without warning.
  *
@@ -66,12 +66,34 @@ export const PRAYER_IDS = [
 export const prayerIdSchema = z.enum(PRAYER_IDS)
 export type PrayerId = z.infer<typeof prayerIdSchema>
 
-export const prayerProgressSchema = z.object({
+export const TRACKED_PRAYER_IDS = [
+  "fajr",
+  "dhuhr",
+  "asr",
+  "maghrib",
+  "isha",
+] as const
+
+export const trackedPrayerIdSchema = z.enum(TRACKED_PRAYER_IDS)
+export type TrackedPrayerId = z.infer<typeof trackedPrayerIdSchema>
+
+export function isTrackedPrayer(id: PrayerId): id is TrackedPrayerId {
+  return TRACKED_PRAYER_IDS.some((prayer) => prayer === id)
+}
+
+export const legacyPrayerProgressSchema = z.object({
   version: z.literal(STORAGE_VERSION),
   completed: z.array(prayerIdSchema),
 })
 
-export type PrayerProgress = z.infer<typeof prayerProgressSchema>
+export const prayerDayProgressSchema = z.object({
+  version: z.literal(STORAGE_VERSION),
+  dateKey: z.iso.date(),
+  completed: z
+    .array(trackedPrayerIdSchema)
+    .transform((prayers) => [...new Set(prayers)]),
+})
+export type PrayerDayProgress = z.infer<typeof prayerDayProgressSchema>
 
 // ---------------------------------------------------------------------------
 // Location
@@ -111,6 +133,7 @@ export const settingsSchema = z.object({
   madhab: madhabSchema,
   highLatitudeRule: highLatitudeRuleSchema,
   clockFormat: clockFormatSchema,
+  showAdditionalTimes: z.boolean().default(false),
 })
 export type Settings = z.infer<typeof settingsSchema>
 
@@ -120,6 +143,7 @@ export const DEFAULT_SETTINGS: Settings = {
   madhab: "shafi",
   highLatitudeRule: "middleofthenight",
   clockFormat: "24h",
+  showAdditionalTimes: false,
 }
 
 // ---------------------------------------------------------------------------

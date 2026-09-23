@@ -5,6 +5,7 @@ import {
   getDayTimes,
   getNextPrayer,
   getQiblaBearing,
+  getVisiblePrayerEntries,
   isValidDate,
   OBLIGATORY_PRAYERS,
   PRAYER_IDS,
@@ -138,7 +139,11 @@ describe("getDayTimes", () => {
   })
 
   it("applies the Hanafi madhab to Asr", () => {
-    const hanafi = getDayTimes(JEDDAH, { ...settings, madhab: "hanafi" }, EQUINOX)
+    const hanafi = getDayTimes(
+      JEDDAH,
+      { ...settings, madhab: "hanafi" },
+      EQUINOX
+    )
     const shafi = getDayTimes(JEDDAH, { ...settings, madhab: "shafi" }, EQUINOX)
 
     // Hanafi uses a 2× shadow length, so Asr is strictly later.
@@ -223,6 +228,25 @@ describe("getNextPrayer", () => {
   })
 })
 
+describe("getVisiblePrayerEntries", () => {
+  it("keeps the calculated schedule intact when optional times are hidden", () => {
+    const day = getDayTimes(HELSINKI, settings, EQUINOX)
+    expect(
+      getVisiblePrayerEntries(day, false).map((entry) => entry.id)
+    ).toEqual(OBLIGATORY_PRAYERS)
+    expect(day.entries.map((entry) => entry.id)).toEqual(PRAYER_IDS)
+  })
+
+  it("shows all seven times when the setting is enabled", () => {
+    const day = getDayTimes(HELSINKI, settings, SUMMER_SOLSTICE)
+    const entries = getVisiblePrayerEntries(day, true)
+    expect(entries.map((entry) => entry.id)).toEqual(PRAYER_IDS)
+    expect(entries.find((entry) => entry.id === "fajr")?.basis).toBe(
+      "undefined"
+    )
+  })
+})
+
 describe("getCurrentPrayer", () => {
   it("reports no current prayer before Fajr", () => {
     const day = getDayTimes(JEDDAH, settings, EQUINOX)
@@ -236,6 +260,19 @@ describe("getCurrentPrayer", () => {
     const afterFajr = new Date(timeOf(day, "fajr") + 60_000)
 
     expect(getCurrentPrayer(JEDDAH, settings, afterFajr)).toBe("fajr")
+  })
+
+  it("only highlights Sunrise when the optional times are visible", () => {
+    const day = getDayTimes(JEDDAH, settings, EQUINOX)
+    const afterSunrise = new Date(timeOf(day, "sunrise") + 60_000)
+    expect(getCurrentPrayer(JEDDAH, settings, afterSunrise)).toBeNull()
+    expect(
+      getCurrentPrayer(
+        JEDDAH,
+        { ...settings, showAdditionalTimes: true },
+        afterSunrise
+      )
+    ).toBe("sunrise")
   })
 })
 

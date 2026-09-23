@@ -1,42 +1,51 @@
-import { Sunrise, TriangleAlert } from "lucide-react"
+import { useId } from "react"
+import { TriangleAlert } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatTime } from "@/lib/format"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
+  getVisiblePrayerEntries,
   isValidDate,
   PRAYER_LABELS,
+  PRAYER_BASIS_LABELS,
   type DayTimes,
   type PrayerEntry,
   type PrayerId,
 } from "@/lib/prayer-times"
-import type { ClockFormat } from "@/lib/schemas"
+import {
+  isTrackedPrayer,
+  type ClockFormat,
+  type TrackedPrayerId,
+} from "@/lib/schemas"
 
 export function PrayerList({
   day,
   currentPrayer,
-  nextPrayer,
   clockFormat,
   completed,
   onToggle,
+  showAdditionalTimes,
+  disabled,
 }: {
   day: DayTimes
   currentPrayer: PrayerId | null
-  nextPrayer: PrayerId | null
   clockFormat: ClockFormat
-  completed: ReadonlySet<PrayerId>
-  onToggle: (prayer: PrayerId) => void
+  completed: ReadonlySet<TrackedPrayerId>
+  onToggle: (prayer: TrackedPrayerId) => void
+  showAdditionalTimes: boolean
+  disabled: boolean
 }) {
   return (
-    <ul aria-label="Prayer times" className="flex flex-col">
-      {day.entries.map((entry) => (
+    <ul aria-label="Prayer times" className="flex flex-col gap-2">
+      {getVisiblePrayerEntries(day, showAdditionalTimes).map((entry) => (
         <PrayerRow
           key={entry.id}
           entry={entry}
           isCurrent={entry.id === currentPrayer}
-          isNext={entry.id === nextPrayer}
           clockFormat={clockFormat}
-          completed={completed.has(entry.id)}
+          completed={isTrackedPrayer(entry.id) && completed.has(entry.id)}
           onToggle={onToggle}
+          disabled={disabled}
         />
       ))}
     </ul>
@@ -46,21 +55,26 @@ export function PrayerList({
 function PrayerRow({
   entry,
   isCurrent,
-  isNext,
   clockFormat,
   completed,
   onToggle,
+  disabled,
 }: {
   entry: PrayerEntry
   isCurrent: boolean
-  isNext: boolean
   clockFormat: ClockFormat
   completed: boolean
-  onToggle: (prayer: PrayerId) => void
+  onToggle: (prayer: TrackedPrayerId) => void
+  disabled: boolean
 }) {
+  const checkboxId = useId()
+  const prayer = entry.id
   const label = PRAYER_LABELS[entry.id]
-  const isSunrise = entry.id === "sunrise"
-  const marker = basisMarker(entry)
+  const tracked = isTrackedPrayer(prayer)
+  const marker = PRAYER_BASIS_LABELS[entry.basis]
+  const completionLabel = `Mark ${label.en} as ${
+    completed ? "not completed" : "completed"
+  }`
 
   return (
     <li
@@ -68,83 +82,65 @@ function PrayerRow({
       // announced and not merely highlighted.
       aria-current={isCurrent ? "time" : undefined}
       className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-3 transition-colors",
-        isCurrent && "bg-accent",
-        isNext && !isCurrent && "bg-accent/40",
-        completed && "opacity-70"
+        "grid min-h-14 grid-cols-[minmax(0,1fr)_max-content_2.75rem] items-center gap-x-3 rounded-lg border-2 border-border bg-card ps-4 pe-2 transition-colors",
+        isCurrent && "border-foreground/75"
       )}
     >
-      {isSunrise ? (
-        <Sunrise className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-      ) : (
-        <span
-          aria-hidden
-          className={cn(
-            "size-1.5 shrink-0 rounded-full",
-            isCurrent ? "bg-primary" : "bg-muted-foreground/40"
-          )}
-        />
-      )}
-
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 py-1">
         <span
           className={cn(
-            "truncate font-medium",
-            isSunrise && "text-muted-foreground"
+            "text-lg font-medium",
+            isCurrent && "font-semibold",
+            (!tracked || completed) && "text-muted-foreground"
           )}
         >
           {label.en}
         </span>
-        {marker && (
-          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-            <TriangleAlert className="size-3 shrink-0" aria-hidden />
-            {marker}
-          </span>
-        )}
+        <span lang="ar" dir="rtl" className="text-sm text-muted-foreground">
+          {label.ar}
+        </span>
       </div>
-
-      <span lang="ar" dir="rtl" className="text-sm text-muted-foreground">
-        {label.ar}
-      </span>
 
       <span
         className={cn(
-          "tabular w-16 text-end font-semibold",
-          isSunrise && "font-normal text-muted-foreground",
+          "text-end text-lg font-semibold whitespace-nowrap tabular",
+          !tracked && "font-normal text-muted-foreground",
+          completed && "text-muted-foreground",
           !isValidDate(entry.time) && "text-muted-foreground"
         )}
       >
         {formatTime(entry.time, clockFormat)}
       </span>
 
-      {isSunrise ? (
-        <span className="size-4 shrink-0" aria-hidden />
+      {tracked ? (
+        <label
+          htmlFor={checkboxId}
+          className={cn(
+            "flex size-11 items-center justify-center",
+            !disabled && "cursor-pointer"
+          )}
+        >
+          <Checkbox
+            id={checkboxId}
+            className="size-5"
+            checked={completed}
+            disabled={disabled}
+            onCheckedChange={() => {
+              onToggle(prayer)
+            }}
+          />
+          <span className="sr-only">{completionLabel}</span>
+        </label>
       ) : (
-        <Checkbox
-          checked={completed}
-          onCheckedChange={() => {
-            onToggle(entry.id)
-          }}
-          aria-label={`Mark ${label.en} as ${
-            completed ? "not completed" : "completed"
-          }`}
-        />
+        <span className="size-11" aria-hidden />
+      )}
+
+      {marker && (
+        <span className="col-span-full flex items-start gap-1 pe-2 pb-2 text-xs text-muted-foreground">
+          <TriangleAlert className="mt-0.5 size-3 shrink-0" aria-hidden />
+          {marker}
+        </span>
       )}
     </li>
   )
-}
-
-/**
- * The visible half of AGENTS.md §4.5: a time that was not observed must say so
- * on the row itself, not only in a footnote somebody may never scroll to.
- */
-function basisMarker(entry: PrayerEntry): string | null {
-  switch (entry.basis) {
-    case "undefined":
-      return "No true twilight — estimated"
-    case "ruleAdjusted":
-      return "Adjusted for high latitude"
-    default:
-      return null
-  }
 }
