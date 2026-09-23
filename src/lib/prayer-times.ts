@@ -17,7 +17,7 @@ import type {
   PrayerId,
   Settings,
 } from "@/lib/schemas"
-import { PRAYER_IDS } from "@/lib/schemas"
+import { isTrackedPrayer, PRAYER_IDS, TRACKED_PRAYER_IDS } from "@/lib/schemas"
 
 export type { PrayerId } from "@/lib/schemas"
 export { PRAYER_IDS } from "@/lib/schemas"
@@ -28,14 +28,8 @@ export { PRAYER_IDS } from "@/lib/schemas"
  * unit-testable. See AGENTS.md §5.
  */
 
-/** Tracked prayers; Sunrise is displayed but never "next". */
-export const OBLIGATORY_PRAYERS: readonly PrayerId[] = [
-  "fajr",
-  "dhuhr",
-  "asr",
-  "maghrib",
-  "isha",
-]
+/** Qiyam and Sunrise are optional display times, never tracked or "next". */
+export const OBLIGATORY_PRAYERS: readonly PrayerId[] = TRACKED_PRAYER_IDS
 
 export const PRAYER_LABELS: Record<PrayerId, { en: string; ar: string }> = {
   qiyam: { en: "Qiyam", ar: "قيام الليل" },
@@ -63,11 +57,15 @@ export interface PrayerEntry {
   basis: PrayerBasis
 }
 
-export type PrayerBasis =
-  | "observed"
-  | "ruleAdjusted"
-  | "undefined"
-  | "derived"
+export type PrayerBasis = "observed" | "ruleAdjusted" | "undefined" | "derived"
+
+/** Approximation explanations must agree in the overview and the prayer list. */
+export const PRAYER_BASIS_LABELS: Record<PrayerBasis, string | null> = {
+  observed: null,
+  ruleAdjusted: "Adjusted for high latitude",
+  undefined: "No true twilight — estimated",
+  derived: null,
+}
 
 export interface DayTimes {
   date: Date
@@ -76,6 +74,15 @@ export interface DayTimes {
   highLatitudeRule: string
   /** True when any entry was not directly observed. */
   hasApproximation: boolean
+}
+
+export function getVisiblePrayerEntries(
+  day: DayTimes,
+  showAdditionalTimes: boolean
+): PrayerEntry[] {
+  return showAdditionalTimes
+    ? day.entries
+    : day.entries.filter((entry) => isTrackedPrayer(entry.id))
 }
 
 function toCoordinates(location: AppLocation): Coordinates {
@@ -218,7 +225,7 @@ function classifyBases(
   return bases
 }
 
-/** All six times for the calendar day containing `date`. */
+/** All seven times, including optional display times, for this calendar day. */
 export function getDayTimes(
   location: AppLocation,
   settings: Settings,
@@ -297,7 +304,9 @@ export function getNextPrayer(
 
   const upcoming = today.entries
     .filter((entry) => OBLIGATORY_PRAYERS.includes(entry.id))
-    .filter((entry) => isValidDate(entry.time) && entry.time.getTime() > now.getTime())
+    .filter(
+      (entry) => isValidDate(entry.time) && entry.time.getTime() > now.getTime()
+    )
     .toSorted((a, b) => a.time.getTime() - b.time.getTime())[0]
 
   if (upcoming) {
@@ -312,8 +321,7 @@ export function getNextPrayer(
 
   const tomorrow = getDayTimes(location, settings, addDays(now, 1))
   const fajr =
-    tomorrow.entries.find((entry) => entry.id === "fajr") ??
-    tomorrow.entries[0]
+    tomorrow.entries.find((entry) => entry.id === "fajr") ?? tomorrow.entries[0]
 
   return {
     id: fajr.id,
@@ -328,8 +336,8 @@ export function getNextPrayer(
  * The prayer whose window currently contains `now`, or `null` before Fajr.
  * Sunrise is a moment rather than a window, so a time between sunrise and Dhuhr
  * still counts as being in the Fajr window having ended — `adhan` models this
- * by reporting `sunrise` as the current prayer, which we surface as-is so the
- * UI can highlight the right row.
+ * by reporting `sunrise` as the current prayer. Only highlight that row when
+ * the optional times are shown; otherwise no prayer is current before Dhuhr.
  */
 export function getCurrentPrayer(
   location: AppLocation,
@@ -339,7 +347,10 @@ export function getCurrentPrayer(
   const { coordinates, parameters } = buildParameters(location, settings)
   const times = new PrayerTimes(coordinates, now, parameters)
   const current = times.currentPrayer(now)
-  return current === "none" ? null : current
+  return current === "none" ||
+    (current === "sunrise" && !settings.showAdditionalTimes)
+    ? null
+    : current
 }
 
 /** Great-circle bearing from the location to the Kaaba, in degrees from true north. */

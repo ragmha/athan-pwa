@@ -1,9 +1,9 @@
 import { NavLink } from "react-router"
-import { Clock, Compass, Settings2 } from "lucide-react"
+import { MoonStar, Compass, Settings2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const TABS = [
-  { to: "/", label: "Prayers", icon: Clock, end: true },
+  { to: "/", label: "Prayers", icon: MoonStar, end: true },
   { to: "/qibla", label: "Qibla", icon: Compass, end: false },
   { to: "/settings", label: "Settings", icon: Settings2, end: false },
 ] as const
@@ -12,7 +12,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Main"
-      className="sticky bottom-0 border-t border-border bg-background/90 backdrop-blur"
+      className="shrink-0 border-t border-border bg-background"
     >
       <ul className="mx-auto flex max-w-md">
         {TABS.map(({ to, label, icon: Icon, end }) => (
@@ -22,9 +22,9 @@ export function BottomNav() {
               end={end}
               className={({ isActive }) =>
                 cn(
-                  "flex flex-col items-center gap-1 py-2.5 text-xs font-medium transition-colors",
+                  "flex min-h-16 flex-col items-center justify-center gap-1 py-3 text-xs font-medium transition-colors",
                   isActive
-                    ? "text-primary"
+                    ? "font-semibold text-primary"
                     : "text-muted-foreground hover:text-foreground"
                 )
               }

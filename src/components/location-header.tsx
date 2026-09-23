@@ -1,4 +1,4 @@
-import { MapPin, LoaderCircle } from "lucide-react"
+import { ChevronDown, MapPin, LoaderCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAppState } from "@/hooks/use-app-state"
 
@@ -16,25 +16,28 @@ export function LocationHeader({ onSearch }: { onSearch: () => void }) {
       <Button
         variant="ghost"
         onClick={onSearch}
-        className="-ms-2 h-auto min-w-0 flex-1 justify-start px-2 py-1.5"
+        className="-ms-2 min-h-11 min-w-0 flex-1 justify-start px-2"
       >
-        <span className="flex min-w-0 flex-col items-start gap-0.5">
-          <span className="truncate text-lg font-semibold">
-            {location.city}
-          </span>
-          <span className="text-xs font-normal text-muted-foreground">
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="truncate">{location.city}</span>
+          <span className="sr-only">
             {location.source === "gps"
               ? "Current location"
               : location.source === "default"
                 ? "Default location — tap to change"
                 : "Tap to change"}
           </span>
+          {location.source === "default" && (
+            <span className="text-xs text-muted-foreground">Default</span>
+          )}
         </span>
+        <ChevronDown data-icon="inline-end" aria-hidden />
       </Button>
 
       <Button
-        variant="secondary"
+        variant="ghost"
         size="icon"
+        className="size-11"
         onClick={() => void requestGeolocation()}
         disabled={locating}
         aria-label="Use my current location"

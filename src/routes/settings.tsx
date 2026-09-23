@@ -9,6 +9,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useTheme } from "@/components/theme-provider"
 import { useAppState } from "@/hooks/use-app-state"
 import {
@@ -68,9 +69,7 @@ export function SettingsRoute() {
           onValueChange={(value) => {
             updateSettings({
               calculationMethod:
-                value === AUTO
-                  ? null
-                  : calculationMethodSchema.parse(value),
+                value === AUTO ? null : calculationMethodSchema.parse(value),
             })
           }}
         >
@@ -163,6 +162,27 @@ export function SettingsRoute() {
             ))}
           </SelectContent>
         </Select>
+      </Field>
+
+      <Field
+        label="Prayer list"
+        hint="Additional times are not included in prayer tracking or streaks."
+      >
+        <Label
+          htmlFor="show-additional-times"
+          className="min-h-11 justify-between gap-4"
+        >
+          <span>Show Qiyam and Sunrise</span>
+          <span className="grid size-11 shrink-0 place-items-center">
+            <Checkbox
+              id="show-additional-times"
+              checked={settings.showAdditionalTimes}
+              onCheckedChange={(checked) => {
+                updateSettings({ showAdditionalTimes: checked })
+              }}
+            />
+          </span>
+        </Label>
       </Field>
 
       <Separator />

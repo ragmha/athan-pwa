@@ -1,16 +1,15 @@
 import { lazy, Suspense, useMemo, useState } from "react"
 import { DateBar } from "@/components/date-bar"
-import { DayDial } from "@/components/day-dial"
 import { HighLatitudeNote } from "@/components/high-latitude-note"
 import { LocationHeader } from "@/components/location-header"
+import { PrayerHero } from "@/components/prayer-hero"
 import { PrayerList } from "@/components/prayer-list"
-import { Separator } from "@/components/ui/separator"
-import { describeDuration, formatDuration, formatTime } from "@/lib/format"
+import { Button } from "@/components/ui/button"
+import { TRACKED_PRAYER_IDS } from "@/lib/schemas"
 import {
   getCurrentPrayer,
   getDayTimes,
   getNextPrayer,
-  PRAYER_LABELS,
 } from "@/lib/prayer-times"
 import { useNow } from "@/hooks/use-now"
 import { useAppState } from "@/hooks/use-app-state"
@@ -41,56 +40,68 @@ export function PrayersRoute() {
   const current = getCurrentPrayer(location, settings, now)
 
   return (
-    <div className="flex flex-col gap-6 px-5 pt-4 pb-8">
-      <LocationHeader
-        onSearch={() => {
-          setSearchOpen(true)
-        }}
+    <div className="flex flex-col gap-5 px-4 pt-3 pb-6 sm:px-5">
+      <div className="flex flex-col gap-1">
+        <LocationHeader onSearch={() => setSearchOpen(true)} />
+        <DateBar date={now} />
+      </div>
+      <PrayerHero
+        day={day}
+        now={now}
+        next={next}
+        clockFormat={settings.clockFormat}
+        highLatitudeRule={settings.highLatitudeRule}
+        showAdditionalTimes={settings.showAdditionalTimes}
       />
-
-      <DayDial day={day} now={now}>
-        <div className="flex flex-col items-center gap-0.5">
-          <p className="text-xs tracking-wide text-muted-foreground uppercase">
-            {next.isTomorrow ? "Tomorrow" : "Next"}
-          </p>
-          <p className="text-xl font-semibold">{PRAYER_LABELS[next.id].en}</p>
-          <p
-            className="tabular text-3xl font-bold text-primary"
-            // The visible countdown changes every second; announcing that would
-            // be intolerable, so the accessible text below is coarse and stable.
-            aria-hidden
-          >
-            {formatDuration(next.msRemaining)}
-          </p>
-          <output className="sr-only">
-            {PRAYER_LABELS[next.id].en} in {describeDuration(next.msRemaining)},
-            at {formatTime(next.time, settings.clockFormat)}
-          </output>
-          <p className="text-sm text-muted-foreground">
-            at {formatTime(next.time, settings.clockFormat)}
-          </p>
-        </div>
-      </DayDial>
-
-      <DateBar date={now} />
-
-      <Separator />
 
       <PrayerList
         day={day}
         currentPrayer={current}
-        nextPrayer={next.isTomorrow ? null : next.id}
         clockFormat={settings.clockFormat}
         completed={progress.completed}
-        onToggle={progress.toggle}
+        onToggle={(prayer) => void progress.toggle(prayer)}
+        showAdditionalTimes={settings.showAdditionalTimes}
+        disabled={!progress.ready || progress.saving}
       />
 
-      <p className="text-center text-xs text-muted-foreground" aria-live="polite">
-        {progress.completedCount} of 6 tracked prayers completed
-      </p>
+      <div className="flex flex-col gap-2">
+        <div
+          className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground"
+          aria-live="polite"
+        >
+          <p>
+            {progress.loading
+              ? "Loading prayer history…"
+              : progress.ready
+                ? `${progress.completedCount} of ${TRACKED_PRAYER_IDS.length} prayers completed`
+                : "Prayer history unavailable"}
+          </p>
+          {progress.ready && (
+            <p>
+              {progress.saving ? "Saving…" : `${progress.streak}-day streak`}
+            </p>
+          )}
+        </div>
+        {progress.error && (
+          <div role="alert" className="flex flex-col items-start gap-2">
+            <p className="text-xs text-destructive">{progress.error}</p>
+            <Button
+              variant="outline"
+              onClick={progress.reload}
+              disabled={progress.saving}
+            >
+              Retry
+            </Button>
+          </div>
+        )}
+        {progress.ready && progress.warning && (
+          <p role="status" className="text-xs text-muted-foreground">
+            {progress.warning}
+          </p>
+        )}
+      </div>
 
       <HighLatitudeNote day={day} rule={settings.highLatitudeRule} />
-
       {searchOpen && (
         <Suspense fallback={null}>
           <CitySearch open onOpenChange={setSearchOpen} />

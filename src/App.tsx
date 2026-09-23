@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react"
-import { Route, Routes } from "react-router"
+import { Route, Routes, useLocation } from "react-router"
 import { BottomNav } from "@/components/bottom-nav"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PrayersRoute } from "@/routes/prayers"
@@ -15,8 +15,10 @@ const SettingsRoute = lazy(async () => ({
 }))
 
 export function App() {
+  const { pathname } = useLocation()
+
   return (
-    <div className="flex min-h-svh flex-col">
+    <div className="flex app-frame flex-col">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-foreground"
@@ -24,7 +26,11 @@ export function App() {
         Skip to content
       </a>
 
-      <main id="main" className="mx-auto w-full max-w-md flex-1">
+      <main
+        key={pathname}
+        id="main"
+        className="mx-auto min-h-0 w-full max-w-md flex-1 overflow-y-auto"
+      >
         <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/" element={<PrayersRoute />} />

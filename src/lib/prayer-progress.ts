@@ -1,39 +1,40 @@
-import {
-  prayerProgressSchema,
-  readPersisted,
-  STORAGE_KEYS,
-  STORAGE_VERSION,
-  writePersisted,
-  type PrayerId,
-} from "@/lib/schemas"
+import { TRACKED_PRAYER_IDS, type PrayerDayProgress } from "@/lib/schemas"
 
 /** Returns a stable local-calendar key such as `2026-09-20`. */
 export function prayerDateKey(date: Date): string {
+  if (Number.isNaN(date.getTime())) {
+    throw new RangeError("Prayer progress requires a valid date")
+  }
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, "0")
   const day = String(date.getDate()).padStart(2, "0")
   return `${String(year)}-${month}-${day}`
 }
 
-function storageKey(date: Date): string {
-  return `${STORAGE_KEYS.prayerProgress}.${prayerDateKey(date)}`
-}
-
-export function readCompletedPrayers(date: Date): Set<PrayerId> {
-  const progress = readPersisted(
-    storageKey(date),
-    prayerProgressSchema,
-    { version: STORAGE_VERSION, completed: [] }
+export function getPrayerStreak(
+  history: readonly PrayerDayProgress[],
+  now: Date
+): number {
+  const completeDays = new Set(
+    history
+      .filter((day) =>
+        TRACKED_PRAYER_IDS.every((prayer) => day.completed.includes(prayer))
+      )
+      .map((day) => day.dateKey)
   )
-  return new Set(progress.completed.filter((id) => id !== "sunrise"))
-}
+  const cursor = new Date(now)
+  cursor.setHours(12, 0, 0, 0)
 
-export function writeCompletedPrayers(
-  date: Date,
-  completed: Iterable<PrayerId>
-): void {
-  writePersisted(storageKey(date), {
-    version: STORAGE_VERSION,
-    completed: [...new Set(completed)],
-  })
+  // An unfinished today does not break yesterday's streak. Calendar arithmetic
+  // rather than 24-hour durations keeps the count correct through DST changes.
+  if (!completeDays.has(prayerDateKey(cursor))) {
+    cursor.setDate(cursor.getDate() - 1)
+  }
+
+  let streak = 0
+  while (completeDays.has(prayerDateKey(cursor))) {
+    streak += 1
+    cursor.setDate(cursor.getDate() - 1)
+  }
+  return streak
 }

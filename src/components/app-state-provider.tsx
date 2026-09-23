@@ -23,7 +23,7 @@ import {
 } from "@/lib/schemas"
 
 /**
- * Owns the two pieces of durable state: the user's settings and their location.
+ * Owns durable settings and location; prayer history has its own hook.
  *
  * Both are read through zod on first render (AGENTS.md §4.3) so a stale or
  * hand-edited `localStorage` entry degrades to defaults instead of crashing the
